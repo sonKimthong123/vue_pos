@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Modern POS System - Vue + Tailwind</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8fafc;
+      }
+      [v-cloak] {
+        display: none;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      /* Glass morphism effect */
+      .glass {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+      /* Product card hover effect */
+      .product-card {
+        transition: all 0.3s ease;
+      }
+      .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+      /* Smooth transitions */
+      .smooth {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      /* Pulse animation for CTA */
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+      .animate-pulse-slow {
+        animation: pulse 3s infinite;
+      }
+      /* Floating cart button */
+      .cart-btn {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+    </style>
+  </head>
+  <body v-cloak class="antialiased text-gray-800">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex items-center">
+            <svg
+              class="h-8 w-8 text-indigo-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 2L3 9V22H21V9L12 2Z"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M9 22V12H15V22"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <span class="ml-2 text-xl font-bold text-gray-900">ShopSwift</span>
+          </div>
+          <div class="hidden md:flex items-center space-x-8">
+            <a
+              href="#home"
+              class="text-gray-700 hover:text-indigo-600 font-medium smooth"
+              >Home</a
+            >
+            <a
+              href="#shop"
+              class="text-gray-700 hover:text-indigo-600 font-medium smooth"
+              >Products</a
+            >
+            <a
+              href="#testimonials"
+              class="text-gray-700 hover:text-indigo-600 font-medium smooth"
+              >Testimonials</a
+            >
+            <a
+              href="#faq"
+              class="text-gray-700 hover:text-indigo-600 font-medium smooth"
+              >FAQ</a
+            >
+          </div>
+          <div class="flex items-center">
+            <button
+              @click="showCheckout = true"
+              class="relative flex items-center p-2 rounded-full text-gray-700 hover:text-indigo-600 smooth"
+            >
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                />
+              </svg>
+              <span
+                v-if="cart.length > 0"
+                class="absolute -top-1 -right-1 bg-indigo-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center"
+              >
+                {{ cart.reduce((sum, item) => sum + item.quantity, 0) }}
+              </span>
+            </button>
+            <button class="ml-4 md:hidden text-gray-700 hover:text-indigo-600">
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="relative pt-16">
+      <div class="relative bg-gray-900 text-white overflow-hidden">
+        <div class="absolute inset-0">
+          <img
+            src="https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80"
+            alt="Shopping Background"
+            class="object-cover object-center w-full h-full opacity-40"
+          />
+        </div>
+
+        <div
+          class="relative z-10 container mx-auto px-6 py-24 sm:py-32 lg:px-8"
+        >
+          <div class="max-w-2xl mx-auto text-center">
+            <h1 class="text-4xl font-bold tracking-tight sm:text-6xl">
+              Modern Shopping Experience
+            </h1>
+            <p class="mt-6 text-lg leading-8 text-gray-300">
+              Discover our curated collection of premium products with seamless
+              checkout and fast delivery.
+            </p>
+            <div class="mt-10 flex items-center justify-center gap-x-6">
+              <a
+                href="#shop"
+                class="rounded-md bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 smooth"
+              >
+                Browse Products
+              </a>
+              <a
+                href="#testimonials"
+                class="text-sm font-semibold leading-6 text-white hover:text-gray-300 smooth"
+              >
+                See testimonials <span aria-hidden="true">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="shop" class="py-16 sm:py-24">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+          <h2 class="text-3xl font-bold text-gray-900 sm:text-4xl">
+            Our Products
+          </h2>
+          <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            Carefully selected items for your everyday needs
+          </p>
+        </div>
+
+        <!-- Filters -->
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+          <div class="relative flex-1">
+            <div
+              class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"
+            >
+              <svg
+                class="h-5 w-5 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            </div>
+            <input
+              v-model="search"
+              type="text"
+              placeholder="Search products..."
+              class="block w-full rounded-md border-0 py-2.5 pl-10 pr-4 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            />
+          </div>
+          <select
+            v-model="selectedCategory"
+            class="rounded-md border-0 py-2.5 pl-4 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6"
+          >
+            <option value="">All Categories</option>
+            <option v-for="cat in categories" :key="cat">{{ cat }}</option>
+          </select>
+        </div>
+
+        <!-- Products Grid -->
+        <div
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+        >
+          <div
+            v-for="product in filteredProducts"
+            :key="product.id"
+            class="product-card bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md border border-gray-100"
+            @click="showProduct(product)"
+          >
+            <div class="relative pt-[100%] bg-gray-50">
+              <img
+                :src="product.image"
+                :alt="product.title"
+                class="absolute top-0 left-0 w-full h-full object-contain p-4"
+              />
+            </div>
+            <div class="p-4">
+              <h3 class="font-medium text-gray-900 line-clamp-1 mb-1">
+                {{ product.title }}
+              </h3>
+              <p class="text-sm text-gray-500 line-clamp-2 mb-3">
+                {{ product.description }}
+              </p>
+              <div class="flex items-center justify-between">
+                <span class="text-lg font-bold text-indigo-600"
+                  >${{ product.price.toFixed(2) }}</span
+                >
+                <button
+                  @click.stop="addToCart(product)"
+                  class="inline-flex items-center rounded-md bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-100 smooth"
+                >
+                  <svg
+                    class="-ml-0.5 mr-1.5 h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                    />
+                  </svg>
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Product Detail Modal -->
+    <div
+      v-if="selectedProduct"
+      class="fixed inset-0 z-50 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0"
+      >
+        <div
+          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          aria-hidden="true"
+          @click="selectedProduct = null"
+        ></div>
+
+        <span
+          class="hidden sm:inline-block sm:align-middle sm:h-screen"
+          aria-hidden="true"
+          >&#8203;</span
+        >
+
+        <div
+          class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full"
+        >
+          <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div class="sm:flex sm:items-start">
+              <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                <div class="flex justify-between items-start">
+                  <h3
+                    class="text-lg leading-6 font-medium text-gray-900"
+                    id="modal-title"
+                  >
+                    {{ selectedProduct.title }}
+                  </h3>
+                  <button
+                    @click="selectedProduct = null"
+                    class="text-gray-400 hover:text-gray-500"
+                  >
+                    <svg
+                      class="h-6 w-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="mt-4 flex flex-col md:flex-row gap-6">
+                  <div
+                    class="w-full md:w-1/2 bg-gray-50 rounded-lg flex items-center justify-center p-8"
+                  >
+                    <img
+                      :src="selectedProduct.image"
+                      :alt="selectedProduct.title"
+                      class="max-h-64 object-contain"
+                    />
+                  </div>
+                  <div class="w-full md:w-1/2">
+                    <div class="flex items-center mb-4">
+                      <div class="flex">
+                        <svg
+                          v-for="i in 5"
+                          :key="i"
+                          class="h-5 w-5 text-yellow-400"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                          />
+                        </svg>
+                      </div>
+                      <span class="ml-2 text-sm text-gray-500">(4.9/5.0)</span>
+                    </div>
+
+                    <p class="text-gray-600 text-sm mb-4">
+                      {{ selectedProduct.description }}
+                    </p>
+
+                    <div class="mt-6">
+                      <p class="text-3xl font-bold text-gray-900 mb-6">
+                        ${{ selectedProduct.price.toFixed(2) }}
+                      </p>
+
+                      <button
+                        @click="addToCart(selectedProduct)"
+                        class="w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 smooth"
+                      >
+                        <svg
+                          class="-ml-1 mr-3 h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                          />
+                        </svg>
+                        Add to Cart
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Checkout Side Panel -->
+    <div
+      v-if="showCheckout"
+      class="fixed inset-0 z-50 overflow-hidden"
+      aria-labelledby="slide-over-title"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div class="absolute inset-0 overflow-hidden">
+        <div
+          class="absolute inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          aria-hidden="true"
+          @click="showCheckout = false"
+        ></div>
+
+        <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
+          <div class="w-screen max-w-md">
+            <div
+              class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll"
+            >
+              <div class="flex-1 py-6 overflow-y-auto px-4 sm:px-6">
+                <div class="flex items-start justify-between">
+                  <h2
+                    class="text-lg font-medium text-gray-900"
+                    id="slide-over-title"
+                  >
+                    Shopping cart
+                  </h2>
+                  <div class="ml-3 h-7 flex items-center">
+                    <button
+                      @click="showCheckout = false"
+                      class="-m-2 p-2 text-gray-400 hover:text-gray-500"
+                    >
+                      <svg
+                        class="h-6 w-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="mt-8">
+                  <div class="flow-root">
+                    <ul role="list" class="-my-6 divide-y divide-gray-200">
+                      <li v-for="item in cart" :key="item.id" class="py-6 flex">
+                        <div
+                          class="flex-shrink-0 w-24 h-24 rounded-md overflow-hidden"
+                        >
+                          <img
+                            :src="item.image"
+                            :alt="item.title"
+                            class="w-full h-full object-center object-contain"
+                          />
+                        </div>
+
+                        <div class="ml-4 flex-1 flex flex-col">
+                          <div>
+                            <div
+                              class="flex justify-between text-base font-medium text-gray-900"
+                            >
+                              <h3>{{ item.title }}</h3>
+                              <p class="ml-4">
+                                ${{ (item.price * item.quantity).toFixed(2) }}
+                              </p>
+                            </div>
+                          </div>
+                          <div
+                            class="flex-1 flex items-end justify-between text-sm"
+                          >
+                            <div class="flex items-center border rounded-md">
+                              <button
+                                @click="decreaseQuantity(item)"
+                                class="px-3 py-1 text-gray-600 hover:text-indigo-500 smooth"
+                              >
+                                -
+                              </button>
+                              <span class="px-2">{{ item.quantity }}</span>
+                              <button
+                                @click="increaseQuantity(item)"
+                                class="px-3 py-1 text-gray-600 hover:text-indigo-500 smooth"
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <div class="flex">
+                              <button
+                                @click="cart = cart.filter(cartItem => cartItem.id !== item.id)"
+                                class="font-medium text-indigo-600 hover:text-indigo-500 smooth"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div class="border-t border-gray-200 py-6 px-4 sm:px-6">
+                <div
+                  class="flex justify-between text-base font-medium text-gray-900"
+                >
+                  <p>Subtotal</p>
+                  <p>${{ subtotal.toFixed(2) }}</p>
+                </div>
+                <p class="mt-0.5 text-sm text-gray-500">
+                  Shipping and taxes calculated at checkout.
+                </p>
+                <div class="mt-6">
+                  <button
+                    @click="checkout"
+                    :disabled="cart.length === 0"
+                    :class="{ 'opacity-50 cursor-not-allowed': cart.length === 0 }"
+                    class="w-full flex justify-center items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-indigo-600 hover:bg-indigo-700 smooth"
+                  >
+                    Checkout
+                  </button>
+                </div>
+                <div
+                  class="mt-6 flex justify-center text-sm text-center text-gray-500"
+                >
+                  <p>
+                    or
+                    <button
+                      @click="showCheckout = false"
+                      type="button"
+                      class="text-indigo-600 font-medium hover:text-indigo-500 smooth"
+                    >
+                      Continue Shopping<span aria-hidden="true"> &rarr;</span>
+                    </button>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Testimonials -->
+    <section id="testimonials" class="bg-white py-16 sm:py-24">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <h2 class="text-3xl font-bold text-gray-900 sm:text-4xl">
+            Trusted by customers worldwide
+          </h2>
+          <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            Don't just take our word for it - hear what our customers have to
+            say
+          </p>
+        </div>
+
+        <div class="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          <div class="bg-gray-50 p-8 rounded-lg">
+            <div class="flex items-center mb-4">
+              <div class="flex">
+                <svg
+                  v-for="i in 5"
+                  :key="i"
+                  class="h-5 w-5 text-yellow-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p class="text-gray-600 mb-6">
+              "The checkout process was so smooth and fast. I received my order
+              within 2 days and everything was perfect. Will definitely shop
+              here again!"
+            </p>
+            <div class="flex items-center">
+              <img
+                class="h-10 w-10 rounded-full object-cover"
+                src="https://randomuser.me/api/portraits/women/43.jpg"
+                alt="Sarah J."
+              />
+              <div class="ml-3">
+                <p class="text-sm font-medium text-gray-900">Sarah J.</p>
+                <p class="text-sm text-gray-500">Verified Buyer</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 p-8 rounded-lg">
+            <div class="flex items-center mb-4">
+              <div class="flex">
+                <svg
+                  v-for="i in 5"
+                  :key="i"
+                  class="h-5 w-5 text-yellow-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p class="text-gray-600 mb-6">
+              "I was impressed by the quality of the products and the excellent
+              customer service. The mobile experience is fantastic too!"
+            </p>
+            <div class="flex items-center">
+              <img
+                class="h-10 w-10 rounded-full object-cover"
+                src="https://randomuser.me/api/portraits/men/32.jpg"
+                alt="Michael T."
+              />
+              <div class="ml-3">
+                <p class="text-sm font-medium text-gray-900">Michael T.</p>
+                <p class="text-sm text-gray-500">Verified Buyer</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-gray-50 p-8 rounded-lg">
+            <div class="flex items-center mb-4">
+              <div class="flex">
+                <svg
+                  v-for="i in 5"
+                  :key="i"
+                  class="h-5 w-5 text-yellow-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <p class="text-gray-600 mb-6">
+              "As a small business owner, I appreciate how easy it is to manage
+              orders and inventory with this system. It's saved me so much
+              time!"
+            </p>
+            <div class="flex items-center">
+              <img
+                class="h-10 w-10 rounded-full object-cover"
+                src="https://randomuser.me/api/portraits/women/65.jpg"
+                alt="Jessica L."
+              />
+              <div class="ml-3">
+                <p class="text-sm font-medium text-gray-900">Jessica L.</p>
+                <p class="text-sm text-gray-500">Business Owner</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="bg-gray-50 py-16 sm:py-24">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+          <h2 class="text-3xl font-bold text-gray-900 sm:text-4xl">
+            Frequently asked questions
+          </h2>
+          <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+            Everything you need to know about shopping with us
+          </p>
+        </div>
+
+        <div class="mt-12 max-w-3xl mx-auto">
+          <div
+            v-for="(faq, index) in faqs"
+            :key="index"
+            class="mb-6 overflow-hidden rounded-lg border border-gray-200"
+          >
+            <button
+              @click="toggleFAQ(index)"
+              class="flex w-full items-center justify-between p-6 text-left text-gray-900 hover:bg-gray-50 smooth"
+            >
+              <span class="text-lg font-medium">{{ faq.question }}</span>
+              <svg
+                class="h-5 w-5 text-gray-500 transform transition-transform duration-200"
+                :class="{ 'rotate-180': faq.open }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+            <div v-show="faq.open" class="px-6 pb-6">
+              <p class="text-gray-600">{{ faq.answer }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white pt-12 pb-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 class="text-lg font-semibold mb-4">ShopSwift</h3>
+            <p class="text-gray-400 text-sm">
+              Modern shopping experience with seamless checkout and fast
+              delivery.
+            </p>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold mb-4">Shop</h3>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="#"
+                  class="text-gray-400 hover:text-white text-sm smooth"
+                  >All Products</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="text-gray-400 hover:text-white text-sm smooth"
+                  >New Arrivals</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="text-gray-400 hover:text-white text-sm smooth"
+                  >Featured</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="text-gray-400 hover:text-white text-sm smooth"
+                  >Discounts</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold mb-4">Company</h3>
+            <ul class="space-y-2">
+              <li>
+                <a
+                  href="#"
+                  class="text-gray-400 hover:text-white text-sm smooth"
+                  >About Us</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="text-gray-400 hover:text-white text-sm smooth"
+                  >Careers</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="text-gray-400 hover:text-white text-sm smooth"
+                  >Privacy Policy</a
+                >
+              </li>
+              <li>
+                <a
+                  href="#"
+                  class="text-gray-400 hover:text-white text-sm smooth"
+                  >Terms of Service</a
+                >
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold mb-4">Contact</h3>
+            <ul class="space-y-2">
+              <li class="text-gray-400 text-sm">123 Main Street</li>
+              <li class="text-gray-400 text-sm">New York, NY 10001</li>
+              <li class="text-gray-400 text-sm">hello@shopswift.com</li>
+              <li class="text-gray-400 text-sm">(555) 123-4567</li>
+            </ul>
+          </div>
+        </div>
+        <div
+          class="mt-12 pt-8 border-t border-gray-800 text-center text-gray-400 text-sm"
+        >
+          <p>&copy; 2023 ShopSwift. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+      const { createApp } = Vue;
+
+      createApp({
+        data() {
+          return {
+            products: [],
+            categories: [],
+            selectedCategory: '',
+            search: '',
+            cart: [],
+            selectedProduct: null,
+            showCheckout: false,
+          };
+        },
+        computed: {
+          filteredProducts() {
+            return this.products.filter((p) => {
+              const matchesCategory =
+                this.selectedCategory === '' ||
+                p.category === this.selectedCategory;
+              const matchesSearch = p.title
+                .toLowerCase()
+                .includes(this.search.toLowerCase());
+              return matchesCategory && matchesSearch;
+            });
+          },
+          subtotal() {
+            return this.cart.reduce(
+              (sum, item) => sum + item.price * item.quantity,
+              0
+            );
+          },
+          tax() {
+            return this.subtotal * 0.1; // 10% tax
+          },
+          total() {
+            return this.subtotal + this.tax;
+          },
+        },
+        methods: {
+          fetchProducts() {
+            fetch('https://fakestoreapi.com/products')
+              .then((res) => res.json())
+              .then((data) => {
+                this.products = data;
+                this.categories = [...new Set(data.map((p) => p.category))];
+              })
+              .catch((error) =>
+                console.error('Error fetching products:', error)
+              );
+          },
+          addToCart(product) {
+            const existingItem = this.cart.find(
+              (item) => item.id === product.id
+            );
+            if (existingItem) {
+              existingItem.quantity++;
+            } else {
+              this.cart.push({ ...product, quantity: 1 });
+            }
+          },
+          increaseQuantity(item) {
+            item.quantity++;
+          },
+          decreaseQuantity(item) {
+            if (item.quantity > 1) {
+              item.quantity--;
+            } else {
+              this.cart = this.cart.filter(
+                (cartItem) => cartItem.id !== item.id
+              );
+            }
+          },
+          showProduct(product) {
+            this.selectedProduct = product;
+          },
+          checkout() {
+            if (this.cart.length) {
+              Swal.fire({
+                icon: 'success',
+                title: 'Purchase Complete!',
+                text: 'Thank you for your order.',
+                confirmButtonColor: '#4f46e5',
+                confirmButtonText: 'OK',
+                timer: 3000,
+                timerProgressBar: true,
+              }).then(() => {
+                this.cart = [];
+                this.showCheckout = false;
+              });
+            }
+          },
+        },
+        mounted() {
+          this.fetchProducts();
+        },
+      }).mount('body');
+    </script>
+    <script>
+      // JavaScript to toggle the answers and rotate the arrows
+      document
+        .querySelectorAll('[id^="question"]')
+        .forEach(function (button, index) {
+          button.addEventListener('click', function () {
+            var answer = document.getElementById('answer' + (index + 1));
+            var arrow = document.getElementById('arrow' + (index + 1));
+
+            if (
+              answer.style.display === 'none' ||
+              answer.style.display === ''
+            ) {
+              answer.style.display = 'block';
+              arrow.style.transform = 'rotate(0deg)';
+            } else {
+              answer.style.display = 'none';
+              arrow.style.transform = 'rotate(-180deg)';
+            }
+          });
+        });
+    </script>
+  </body>
+</html>
